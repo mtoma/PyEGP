@@ -34,10 +34,12 @@ def _etree_to_dict(t):
 
 def _extract_node_info(node_id, root):
 #	print("extract_node_info:["+node_id+']')
-	elements = root.findall(f".//ID[.='{node_id}']/../..")
+	elements = root.findall(f".//*[ID='{node_id}']/..")
+#	print(str(elements))
 	node_info = {}
 	for elem in elements:
 		d = _etree_to_dict(elem)
+#		_pp.pprint(d)
 		try:
 #			print(d['Element']['Element']['Label'])
 			node_info['label'] = d['Element']['Element']['Label']
@@ -45,7 +47,7 @@ def _extract_node_info(node_id, root):
 			code_id = ''
 			code_id = d['Element']['SubmitableElement']['JobRecipe']['JobRecipe']['code']
 #			print('code_id:['+code_id+']')
-			code_elements = root.findall(f".//ID[.='{code_id}']/../..")
+			code_elements = root.findall(f".//*[ID='{code_id}']/..")
 			code_d = _etree_to_dict(code_elements[0])
 #			pp.pprint(code_d)
 #			node_info['code'] = code_d['Element']['TextElement']['Text']
@@ -75,6 +77,7 @@ class PyEGP:
 	def __scan_egp_file(self):
 		root = self.__tree.getroot()
 		elements = root.findall(".//Element[@Type='SAS.EG.ProjectElements.Link']")
+#		print(str(elements))
 		from_list = []
 		to_list = []
 		nodes_info = {}
@@ -82,7 +85,7 @@ class PyEGP:
 		for element in elements:
 			d = _etree_to_dict(element)
 			try:
-		#		pp.pprint(d)
+#				_pp.pprint(d)
 				if d['Element']['Log']['LinkFrom'] and d['Element']['Log']['LinkTo']:
 					if d['Element']['Log']['LinkFrom'] not in from_list: from_list.append(d['Element']['Log']['LinkFrom'])
 					if d['Element']['Log']['LinkTo'] not in to_list: to_list.append(d['Element']['Log']['LinkTo'])
@@ -110,12 +113,13 @@ class PyEGP:
 				pass
 			
 		self.__nodes_info = nodes_info
+#		_pp.pprint(self.__nodes_info)
 
 		max_tree_size = 0
 		for task_id in from_list:
-			if task_id not in to_list:
+			if task_id not in to_list and task_id in self.__nodes_info:
 				tree_size = 0
-				for pre, _, node in RenderTree(nodes_info[task_id], style=AsciiStyle):
+				for pre, _, node in RenderTree(self.__nodes_info[task_id], style=AsciiStyle):
 					tree_size+=1
 					
 				if tree_size > max_tree_size:
@@ -123,7 +127,6 @@ class PyEGP:
 					self.__root_id = task_id
 
 		print("ROOT ID:["+self.__root_id+']')
-#		pp.pprint(self.__nodes_info)
 		
 	def print_main_project(self):
 		if not self.__nodes_info: self.__scan_egp_file()
