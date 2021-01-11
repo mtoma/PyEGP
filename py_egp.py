@@ -50,8 +50,8 @@ def _extract_node_info(node_id, root):
 			code_elements = root.findall(f".//*[ID='{code_id}']/..")
 			code_d = _etree_to_dict(code_elements[0])
 #			pp.pprint(code_d)
-#			node_info['code'] = code_d['Element']['TextElement']['Text']
-			node_info['code'] = 'CODE FOUND'
+			node_info['code'] = code_d['Element']['TextElement']['Text']
+#			node_info['code'] = 'CODE FOUND'
 		except KeyError as e:
 			if str(e) != "'Element'" and str(e) != "'SubmitableElement'": print('KeyError:'+str(e))
 				
@@ -126,7 +126,7 @@ class PyEGP:
 					max_tree_size = tree_size
 					self.__root_id = task_id
 
-		print("ROOT ID:["+self.__root_id+']')
+#		print("ROOT ID:["+self.__root_id+']')
 		
 	def print_main_project(self):
 		if not self.__nodes_info: self.__scan_egp_file()
