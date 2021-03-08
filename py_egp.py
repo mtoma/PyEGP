@@ -48,7 +48,7 @@ def _extract_node_info(node_id, root, project_unpacked_folder):
             
 #            print(project_unpacked_folder+'/'+node_id+'/'+'code.sas')
             if os.path.isfile(project_unpacked_folder+'/'+node_id+'/'+'code.sas'):
-                node_info['code'] = open(project_unpacked_folder+'/'+node_id+'/'+'code.sas', 'r').read()
+                node_info['code'] = open(project_unpacked_folder+'/'+node_id+'/'+'code.sas', 'r', encoding="utf-8-sig").read()
             else:
                 code_id = ''
                 code_id = d['Element']['SubmitableElement']['JobRecipe']['JobRecipe']['code']
