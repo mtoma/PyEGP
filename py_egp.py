@@ -6,6 +6,7 @@ import tempfile
 import zipfile
 import shutil
 import os
+import os.path
 import sys
 
 _pp = pprint.PrettyPrinter(indent=4)
@@ -32,30 +33,36 @@ def _etree_to_dict(t):
             d[t.tag] = text
     return d
 
-def _extract_node_info(node_id, root):
+def _extract_node_info(node_id, root, project_unpacked_folder):
 #	print("extract_node_info:["+node_id+']')
-	elements = root.findall(f".//*[ID='{node_id}']/..")
+    elements = root.findall(f".//*[ID='{node_id}']/..")
 #	print(str(elements))
-	node_info = {}
-	for elem in elements:
-		d = _etree_to_dict(elem)
+    node_info = {}
+    for elem in elements:
+        d = _etree_to_dict(elem)
 #		_pp.pprint(d)
-		try:
+        try:
 #			print(d['Element']['Element']['Label'])
-			node_info['label'] = d['Element']['Element']['Label']
-			node_info['type'] = d['Element']['Element']['Type']
-			code_id = ''
-			code_id = d['Element']['SubmitableElement']['JobRecipe']['JobRecipe']['code']
-#			print('code_id:['+code_id+']')
-			code_elements = root.findall(f".//*[ID='{code_id}']/..")
-			code_d = _etree_to_dict(code_elements[0])
-#			pp.pprint(code_d)
-			node_info['code'] = code_d['Element']['TextElement']['Text']
-#			node_info['code'] = 'CODE FOUND'
-		except KeyError as e:
-			if str(e) != "'Element'" and str(e) != "'SubmitableElement'": print('KeyError:'+str(e))
-				
-	return node_info
+            node_info['label'] = d['Element']['Element']['Label']
+            node_info['type'] = d['Element']['Element']['Type']
+            
+#            print(project_unpacked_folder+'/'+node_id+'/'+'code.sas')
+            if os.path.isfile(project_unpacked_folder+'/'+node_id+'/'+'code.sas'):
+                node_info['code'] = open(project_unpacked_folder+'/'+node_id+'/'+'code.sas', 'r').read()
+            else:
+                code_id = ''
+                code_id = d['Element']['SubmitableElement']['JobRecipe']['JobRecipe']['code']
+                print('code_id:['+code_id+']')
+                code_elements = root.findall(f".//*[ID='{code_id}']/..")
+                print(code_elements)
+                code_d = _etree_to_dict(code_elements[0])
+    #			pp.pprint(code_d)
+                node_info['code'] = code_d['Element']['TextElement']['Text']
+    #			node_info['code'] = 'CODE FOUND'
+        except KeyError as e:
+            if str(e) != "'Element'" and str(e) != "'SubmitableElement'": print('KeyError:'+str(e))
+                
+    return node_info
 
 class PyEGP:
 	__unpacked_egp_folder = None
@@ -91,12 +98,12 @@ class PyEGP:
 					if d['Element']['Log']['LinkTo'] not in to_list: to_list.append(d['Element']['Log']['LinkTo'])
 					
 					if d['Element']['Log']['LinkFrom'] not in nodes_info:
-						node_info = _extract_node_info(d['Element']['Log']['LinkFrom'], root)
+						node_info = _extract_node_info(d['Element']['Log']['LinkFrom'], root, self.__unpacked_egp_folder)
 						if 'label' in node_info:
 							nodes_info[d['Element']['Log']['LinkFrom']] = Node(node_info['label'], task_id=d['Element']['Log']['LinkFrom'], info=node_info)
 
 					if d['Element']['Log']['LinkTo'] not in nodes_info:
-						node_info = _extract_node_info(d['Element']['Log']['LinkTo'], root)
+						node_info = _extract_node_info(d['Element']['Log']['LinkTo'], root, self.__unpacked_egp_folder)
 						if 'label' in node_info:
 							nodes_info[d['Element']['Log']['LinkTo']] = Node(node_info['label'], task_id=d['Element']['Log']['LinkTo'], info=node_info)
 					
